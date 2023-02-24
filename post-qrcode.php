@@ -34,10 +34,10 @@ function pqrc_display_qr_code($content){
         return $content;
     }
 
-
+    $dimension = apply_filters( 'pqrc_qrcode_dimension', '150x150' );
    // $image_attributes = apply_filters( 'pqrc_image_attributes', null );
 
-    $image_src = sprintf('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=%s', $current_post_url);
+    $image_src = sprintf('https://api.qrserver.com/v1/create-qr-code/?size=%s&data=%s', $dimension, $current_post_url);
     $content .= sprintf("<div class='qrcode'><img src='%s' alt='%s' /></div>", $image_src, $current_post_title);
     return $content;
 }
