@@ -1,74 +1,50 @@
 <?php
-/**
- * Plugin Name:       Post QR Code
- * Plugin URI:        https://criqal.com/
- * Description:       Handle the basics with this plugin.
- * Version:           1.0.0
- * Requires at least: 5.2
- * Requires PHP:      7.2
- * Author:            Gazi Akter
- * Author URI:        https://gaziakter/
- * License:           GPL v2 or later
- * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Update URI:        https://criqal.com/
- * Text Domain:       post-qrcode
- * Domain Path:       /languages
- */
+/*
+Plugin Name: Posts To QR Code
+Plugin URI: https://classysystem.com
+Description: Display QR Code under ever posts
+Version: 1.0
+Author: Gazi Akter
+Author URI: https://gaziakter.com/
+License: GPLv2 or later
+Text Domain: posts-to-qrcode
+Domain Path: /languages/
+*/
 
-//Loading textdomain
-function wordcount_load_texdomain(){
-    load_plugin_textdomain( 'post-qrcode', false, dirname(__FILE__)."/languages" );
+/*function wordcount_activation_hook(){}
+register_activation_hook(__FILE__,"wordcount_activation_hook");
+
+function wordcount_deactivation_hook(){}
+register_deactivation_hook(__FILE__,"wordcount_deactivation_hook");*/
+
+function wordcount_load_textdomain() {
+    load_plugin_textdomain( 'posts-to-qrcode', false, dirname( __FILE__ ) . "/languages" );
 }
-add_action( "plugins_loaded", "wordcount_load_texdomain" );
 
-//Display QR code
-function pqrc_display_qr_code($content){
-    $current_post_id = get_the_ID();   
+function pqrc_display_qr_code( $content ) {
+    $current_post_id    = get_the_ID();
     $current_post_title = get_the_title( $current_post_id );
-    $current_post_url = urlencode(get_the_permalink( $current_post_id ));
- 
-    $current_post_type = get_post_type($current_post_id);
-    $excluded_post_types = apply_filters( 'pqrc_excluded_post_types', array() );
+    $current_post_url   = urlencode( get_the_permalink( $current_post_id ) );
+    $current_post_type  = get_post_type( $current_post_id );
 
-    if(in_array($current_post_type, $excluded_post_types )){
+    // Post Type Check
+
+    $excluded_post_types = apply_filters( 'pqrc_excluded_post_types', array() );
+    if ( in_array( $current_post_type, $excluded_post_types ) ) {
         return $content;
     }
 
-    $dimension = apply_filters( 'pqrc_qrcode_dimension', '150x150' );
-    $image_attributes = apply_filters( 'pqrc_image_attributes', null );
+    //Dimension Hook
+    $dimension = apply_filters( 'pqrc_qrcode_dimension', '185x185' );
 
-    $image_src = sprintf('https://api.qrserver.com/v1/create-qr-code/?size=%s&data=%s', $dimension, $current_post_url);
-    $content .= sprintf("<div class='qrcode'><img %s src='%s' alt='%s' /></div>",$image_attributes, $image_src, $current_post_title);
+    //Image Attributes
+    $image_attributes = apply_filters('pqrc_image_attributes',null);
+
+    $image_src = sprintf( 'https://api.qrserver.com/v1/create-qr-code/?size=%s&ecc=L&qzone=1&data=%s', $dimension, $current_post_url );
+    $content   .= sprintf( "<div class='qrcode'><img %s  src='%s' alt='%s' /></div>",$image_attributes, $image_src, $current_post_title );
+
     return $content;
 }
-add_filter( 'the_content', 'pqrc_display_qr_code');
 
-//Admin pannel setting 
-function pqrc_setting_init(){
-
-    add_settings_section( 'pqrc_section', __('Posts to QR Code', 'post-qrcode'), 'pqrc_section_callback', 'general' );
-
-    add_settings_field( 'pqrc_height', __('QR Code Height', 'post-qrcode'), 'pqrc_display_height','general', 'pqrc_section');
-    add_settings_field( 'pqrc_width', __('QR Code Width', 'post-qrcode'), 'pqrc_display_width','general', 'pqrc_section' );
-
-    register_setting( "general", "pqrc_height", array('sanitize_callback'=>'esc_attr'));
-    register_setting( "general", "pqrc_width", array('sanitize_callback'=>'esc_attr'));
-}
-
-function pqrc_section_callback(){
-    echo "<p>".__('Settings for Posts to QR code Plugin', 'post-qrcode')."</p>";
-}
-
-function pqrc_display_height(){
-    $height = get_option( 'pqrc_height');
-    printf("<input type='text' id='%s' name='%s' value='%s' />", 'pqrc_height', 'pqrc_height', $height);
-}
-
-function pqrc_display_width(){
-    $width = get_option('pqrc_width');
-    printf("<input type='text' id='%s' name='%s' value='%s' />", 'pqrc_width', 'pqrc_width', $width);
-}
-
-add_action( "admin_init", "pqrc_setting_init");
-
+add_filter( 'the_content', 'pqrc_display_qr_code' );
 
