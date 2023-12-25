@@ -58,9 +58,11 @@ function pqrc_settings_init() {
 
     add_settings_field( 'pqrc_height', __( 'QR Code Height', 'posts-to-qrcode' ), 'pqrc_display_field', 'general','pqrc_section',array('pqrc_height') );
     add_settings_field( 'pqrc_width', __( 'QR Code Width', 'posts-to-qrcode' ), 'pqrc_display_field', 'general','pqrc_section',array('pqrc_width') );
+    add_settings_field( 'pqrc_select', __( 'Dropdown', 'posts-to-qrcode' ), 'pqrc_display_select_field', 'general', 'pqrc_section' );
 
     register_setting( 'general', 'pqrc_height', array( 'sanitize_callback' => 'esc_attr' ) );
     register_setting( 'general', 'pqrc_width', array( 'sanitize_callback' => 'esc_attr' ) );
+    register_setting( 'general', 'pqrc_select', array( 'sanitize_callback' => 'esc_attr' ) );
 }
 
 function pqrc_section_callback(){
@@ -71,6 +73,22 @@ function pqrc_display_field($args){
     $option = get_option($args[0]);
     printf( "<input type='text' id='%s' name='%s' value='%s'/>", $args[0], $args[0], $option );
 }
+
+function pqrc_display_select_field() {
+    global $pqrc_countries;
+    $option = get_option( 'pqrc_select' );
+
+    printf( '<select id="%s" name="%s">', 'pqrc_select', 'pqrc_select' );
+    foreach ( $pqrc_countries as $country ) {
+        $selected = '';
+        if ( $option == $country ) {
+            $selected = 'selected';
+        }
+        printf( '<option value="%s" %s>%s</option>', $country, $selected, $country );
+    }
+    echo "</select>";
+}
+
 
 
 add_action( "admin_init", 'pqrc_settings_init' );
