@@ -17,10 +17,6 @@ register_activation_hook(__FILE__,"wordcount_activation_hook");
 function wordcount_deactivation_hook(){}
 register_deactivation_hook(__FILE__,"wordcount_deactivation_hook");*/
 
-function wordcount_load_textdomain() {
-    load_plugin_textdomain( 'posts-to-qrcode', false, dirname( __FILE__ ) . "/languages" );
-}
-
 $pqrc_countries = array(
     __( 'Afganistan', 'posts-to-qrcode' ),
     __( 'Bangladesh', 'posts-to-qrcode' ),
@@ -40,6 +36,9 @@ function pqrc_init() {
 add_action( "init", 'pqrc_init' );
 
 
+function wordcount_load_textdomain() {
+    load_plugin_textdomain( 'posts-to-qrcode', false, dirname( __FILE__ ) . "/languages" );
+}
 
 function pqrc_display_qr_code( $content ) {
     $current_post_id    = get_the_ID();
@@ -74,27 +73,39 @@ add_filter( 'the_content', 'pqrc_display_qr_code' );
 
 function pqrc_settings_init() {
 
-    add_settings_section('pqrc_section',__('Posts to QR Code','posts-to-qrcode'),'pqrc_section_callback','general');
+    add_settings_section( 'pqrc_section', __( 'Posts to QR Code', 'posts-to-qrcode' ), 'pqrc_section_callback', 'general' );
 
-    add_settings_field( 'pqrc_height', __( 'QR Code Height', 'posts-to-qrcode' ), 'pqrc_display_field', 'general','pqrc_section',array('pqrc_height') );
-    add_settings_field( 'pqrc_width', __( 'QR Code Width', 'posts-to-qrcode' ), 'pqrc_display_field', 'general','pqrc_section',array('pqrc_width') );
+    add_settings_field( 'pqrc_height', __( 'QR Code Height', 'posts-to-qrcode' ), 'pqrc_display_field', 'general', 'pqrc_section', array( 'pqrc_height' ) );
+    add_settings_field( 'pqrc_width', __( 'QR Code Width', 'posts-to-qrcode' ), 'pqrc_display_field', 'general', 'pqrc_section', array( 'pqrc_width' ) );
     add_settings_field( 'pqrc_select', __( 'Dropdown', 'posts-to-qrcode' ), 'pqrc_display_select_field', 'general', 'pqrc_section' );
     add_settings_field( 'pqrc_checkbox', __( 'Select Countries', 'posts-to-qrcode' ), 'pqrc_display_checkboxgroup_field', 'general', 'pqrc_section' );
-
+    add_settings_field( 'pqrc_toggle', __( 'Toggle Field', 'posts-to-qrcode' ), 'pqrc_display_toggle_field', 'general', 'pqrc_section' );
 
     register_setting( 'general', 'pqrc_height', array( 'sanitize_callback' => 'esc_attr' ) );
     register_setting( 'general', 'pqrc_width', array( 'sanitize_callback' => 'esc_attr' ) );
     register_setting( 'general', 'pqrc_select', array( 'sanitize_callback' => 'esc_attr' ) );
     register_setting( 'general', 'pqrc_checkbox' );
+    register_setting( 'general', 'pqrc_toggle' );
 }
 
-function pqrc_section_callback(){
-    echo "<p>".__('Settings for Posts To QR Plugin','posts-to-qrcode')."</p>";
+function pqrc_display_toggle_field() {
+    $option = get_option('pqrc_toggle');
+    echo '<div id="toggle1"></div>';
+    echo "<input type='hidden' name='pqrc_toggle' id='pqrc_toggle' value='".$option."'/>";
 }
 
-function pqrc_display_field($args){
-    $option = get_option($args[0]);
-    printf( "<input type='text' id='%s' name='%s' value='%s'/>", $args[0], $args[0], $option );
+function pqrc_display_checkboxgroup_field() {
+    global $pqrc_countries;
+    $option = get_option( 'pqrc_checkbox' );
+
+    foreach ( $pqrc_countries as $country ) {
+        $selected = '';
+
+        if ( is_array( $option ) && in_array( $country, $option ) ) {
+            $selected = 'checked';
+        }
+        printf( '<input type="checkbox" name="pqrc_checkbox[]" value="%s" %s /> %s <br/>', $country, $selected, $country );
+    }
 }
 
 function pqrc_display_select_field() {
@@ -112,20 +123,36 @@ function pqrc_display_select_field() {
     echo "</select>";
 }
 
-function pqrc_display_checkboxgroup_field() {
-    global $pqrc_countries;
-    $option = get_option( 'pqrc_checkbox' );
 
-    foreach ( $pqrc_countries as $country ) {
-        $selected = '';
+function pqrc_section_callback() {
+    echo "<p>" . __( 'Settings for Posts To QR Plugin', 'posts-to-qrcode' ) . "</p>";
+}
 
-        if ( is_array( $option ) && in_array( $country, $option ) ) {
-            $selected = 'checked';
-        }
-        printf( '<input type="checkbox" name="pqrc_checkbox[]" value="%s" %s /> %s <br/>', $country, $selected, $country );
-    }
+function pqrc_display_field( $args ) {
+    $option = get_option( $args[0] );
+    printf( "<input type='text' id='%s' name='%s' value='%s'/>", $args[0], $args[0], $option );
+}
+
+function pqrc_display_height() {
+    $height = get_option( 'pqrc_height' );
+    printf( "<input type='text' id='%s' name='%s' value='%s'/>", 'pqrc_height', 'pqrc_height', $height );
 }
 
 
+function pqrc_display_width() {
+    $width = get_option( 'pqrc_width' );
+    printf( "<input type='text' id='%s' name='%s' value='%s'/>", 'pqrc_width', 'pqrc_width', $width );
+}
+
 add_action( "admin_init", 'pqrc_settings_init' );
+
+function pqrc_assets( $screen ) {
+    if ( 'options-general.php' == $screen ) {
+        wp_enqueue_style( 'pqrc-minitoggle-css', plugin_dir_url( __FILE__ ) . "/assets/css/minitoggle.css" );
+        wp_enqueue_script( 'pqrc-minitoggle-js', plugin_dir_url( __FILE__ ) . "/assets/js/minitoggle.js", array( 'jquery' ), "1.0", true );
+        wp_enqueue_script( 'pqrc-main-js', plugin_dir_url( __FILE__ ) . "/assets/js/pqrc-main.js", array( 'jquery' ), time(), true );
+    }
+}
+
+add_action( 'admin_enqueue_scripts', 'pqrc_assets' );
 
