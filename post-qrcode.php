@@ -21,6 +21,26 @@ function wordcount_load_textdomain() {
     load_plugin_textdomain( 'posts-to-qrcode', false, dirname( __FILE__ ) . "/languages" );
 }
 
+$pqrc_countries = array(
+    __( 'Afganistan', 'posts-to-qrcode' ),
+    __( 'Bangladesh', 'posts-to-qrcode' ),
+    __( 'Bhutan', 'posts-to-qrcode' ),
+    __( 'India', 'posts-to-qrcode' ),
+    __( 'Maldives', 'posts-to-qrcode' ),
+    __( 'Nepal', 'posts-to-qrcode' ),
+    __( 'Pakistan', 'posts-to-qrcode' ),
+    __( 'Sri Lanka', 'posts-to-qrcode' ),
+);
+
+function pqrc_init() {
+    global $pqrc_countries;
+    $pqrc_countries = apply_filters( 'pqrc_countries', $pqrc_countries );
+}
+
+add_action( "init", 'pqrc_init' );
+
+
+
 function pqrc_display_qr_code( $content ) {
     $current_post_id    = get_the_ID();
     $current_post_title = get_the_title( $current_post_id );
@@ -59,10 +79,13 @@ function pqrc_settings_init() {
     add_settings_field( 'pqrc_height', __( 'QR Code Height', 'posts-to-qrcode' ), 'pqrc_display_field', 'general','pqrc_section',array('pqrc_height') );
     add_settings_field( 'pqrc_width', __( 'QR Code Width', 'posts-to-qrcode' ), 'pqrc_display_field', 'general','pqrc_section',array('pqrc_width') );
     add_settings_field( 'pqrc_select', __( 'Dropdown', 'posts-to-qrcode' ), 'pqrc_display_select_field', 'general', 'pqrc_section' );
+    add_settings_field( 'pqrc_checkbox', __( 'Select Countries', 'posts-to-qrcode' ), 'pqrc_display_checkboxgroup_field', 'general', 'pqrc_section' );
+
 
     register_setting( 'general', 'pqrc_height', array( 'sanitize_callback' => 'esc_attr' ) );
     register_setting( 'general', 'pqrc_width', array( 'sanitize_callback' => 'esc_attr' ) );
     register_setting( 'general', 'pqrc_select', array( 'sanitize_callback' => 'esc_attr' ) );
+    register_setting( 'general', 'pqrc_checkbox' );
 }
 
 function pqrc_section_callback(){
@@ -89,6 +112,19 @@ function pqrc_display_select_field() {
     echo "</select>";
 }
 
+function pqrc_display_checkboxgroup_field() {
+    global $pqrc_countries;
+    $option = get_option( 'pqrc_checkbox' );
+
+    foreach ( $pqrc_countries as $country ) {
+        $selected = '';
+
+        if ( is_array( $option ) && in_array( $country, $option ) ) {
+            $selected = 'checked';
+        }
+        printf( '<input type="checkbox" name="pqrc_checkbox[]" value="%s" %s /> %s <br/>', $country, $selected, $country );
+    }
+}
 
 
 add_action( "admin_init", 'pqrc_settings_init' );
